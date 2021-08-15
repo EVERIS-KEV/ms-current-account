@@ -2,7 +2,6 @@ package com.everis.currentaccount.model;
 
 import com.everis.currentaccount.consumer.*;
 import com.everis.currentaccount.dto.*;
-
 import java.util.*;
 import javax.validation.constraints.NotBlank;
 import lombok.*;
@@ -15,7 +14,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "current-account")
 public class currentAccount {
   @Id
-  private String idCurrentAccount; 
+  private String idCurrentAccount;
+
   private String accountNumber = webclient.logic
     .get()
     .uri("/generatedNumberLong/12")
@@ -24,8 +24,18 @@ public class currentAccount {
     .block();
   private String dateCreated = new Date().toString();
   private double amount = 0.0;
-  private List<movements> movements = new ArrayList<movements>(); 
+  private List<movements> movements = new ArrayList<movements>();
+  private String perfil;
 
   @NotBlank(message = "Debe seleccionar un cliente.")
   private String idCustomer;
+
+  public currentAccount(String perfil) {
+    this.perfil = perfil;
+  }
+
+  public currentAccount(String perfil, String idCustomer) {
+    this.perfil = perfil;
+    this.idCustomer = idCustomer;
+  }
 }
