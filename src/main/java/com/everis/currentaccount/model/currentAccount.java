@@ -1,10 +1,12 @@
 package com.everis.currentaccount.model;
 
-import com.everis.currentaccount.consumer.*; 
-
-import java.util.*;
-
+import com.everis.currentaccount.consumer.webclient;  
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import javax.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -24,7 +26,7 @@ public class currentAccount {
     .block();
   private Date dateCreated = new Date();
   private double amount = 0.0;
-  private List<movements> movements = new ArrayList<movements>();
+  private List<movements> movement = new ArrayList<movements>();
   private String profile;
 
   @NotBlank(message = "Debe seleccionar un cliente.")

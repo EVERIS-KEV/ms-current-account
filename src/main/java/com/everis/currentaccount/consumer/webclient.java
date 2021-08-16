@@ -12,7 +12,7 @@ public class webclient {
   );
 
   public static WebClient logic = WebClient.create(
-    "http://host.docker.internal:8090/service/logic"
+    "http://"+gateway+"/service/logic"
   );
 
   public static WebClient creditAccount = WebClient.create(

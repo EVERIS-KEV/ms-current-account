@@ -1,17 +1,31 @@
 package com.everis.currentaccount.service;
 
-import com.everis.currentaccount.consumer.webclient;
-import com.everis.currentaccount.dto.message;
-import com.everis.currentaccount.map.customer;
-import com.everis.currentaccount.model.*;
-import com.everis.currentaccount.repository.currentAccountRepository;
-import java.text.*;
-import java.util.*;
-import java.util.concurrent.*;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.*;
+
+import com.everis.currentaccount.consumer.webclient;
+import com.everis.currentaccount.dto.message;
+import com.everis.currentaccount.map.customer;
+import com.everis.currentaccount.model.currentAccount;
+import com.everis.currentaccount.model.movements;
+import com.everis.currentaccount.repository.currentAccountRepository;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono; 
 
 @Service
 @Transactional
@@ -84,7 +98,7 @@ public class currentAccountService {
     
     if (movement.getType().equals("Deposito")) {
       model.setAmount(movement.getAmount() + val);
-      model.getMovements().add(movement);
+      model.getMovement().add(movement);
     } else {
     	if (movement.getAmount() > val) return "Cantidad insuficiente.";
     	else {
@@ -123,7 +137,7 @@ public class currentAccountService {
     		}
     		
 			model.setAmount(val - movement.getAmount()); 
-			model.getMovements().add(movement);
+			model.getMovement().add(movement);
     	}
     } 
     
@@ -136,7 +150,7 @@ public class currentAccountService {
 	  currentAccount model =  repository.findById(id).get();
 
 	  movements mobj = new movements( model.getAccountNumber() , "Comisión", 1.0);
-	  model.getMovements().add(mobj);
+	  model.getMovement().add(mobj);
 	  
 	  model.setAmount( amount ); 
 	  repository.save(model);
@@ -171,7 +185,7 @@ public class currentAccountService {
 	  double amount = obj.getAmount();
 	  
 	  obj.setAmount( amount + model.getAmount() );
-	  obj.getMovements().add(model);
+	  obj.getMovement().add(model);
 	  
 	  repository.save( obj );
 	  return Mono.just(new message(""));
@@ -182,14 +196,14 @@ public class currentAccountService {
 
     if (repository.existsByAccountNumber(model.getAccountEmisor())) {
     	
-      if (!operations.stream().filter( c -> c.equals( model.getType() ) ).toList().isEmpty()) {
+      if ( model.getType().equals("Retiro") || model.getType().equals("Deposito") || model.getType().equals("Trasnferencia") ) {  
     	  
         currentAccount obj = repository.findByAccountNumber( model.getAccountEmisor() );
     	  
         String idaccount = obj.getIdCurrentAccount();
         String profile = obj.getProfile();
 
-        int count = (int) obj.getMovements().stream().count(); 
+        int count = (int) obj.getMovement().stream().count(); 
         
         if( count == 0 || profile.equals("PYME") ) CommissionForMaintenance(idaccount);  
         if( count > LIMIT_MOVEMENT ) addCommissionById( idaccount );  
@@ -230,9 +244,18 @@ public class currentAccountService {
   }
 
   public Flux<Object> getByCustomer(String id) {
-    return Flux.fromIterable(
-      repository.findAll().stream().filter(c -> c.getIdCustomer().equals(id)).toList()
-    );
+	  
+	  List<currentAccount> lista = repository.findAll();
+	  List<currentAccount> listb = new ArrayList<currentAccount>();
+	  
+	  for (int i = 0; i < lista.size(); i++) {
+		  if( lista.get(i).getIdCustomer().equals(id) ) {
+			  listb.add(lista.get(i));
+		  }
+	  }
+	  
+	  	  
+    return Flux.fromIterable(listb);
   }
 
 }
