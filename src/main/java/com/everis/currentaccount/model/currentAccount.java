@@ -1,16 +1,16 @@
 package com.everis.currentaccount.model;
 
-import com.everis.currentaccount.consumer.*;
-import com.everis.currentaccount.dto.*;
+import com.everis.currentaccount.consumer.*; 
+
 import java.util.*;
-import javax.validation.constraints.NotBlank;
+
 import lombok.*;
+import javax.validation.constraints.NotBlank;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
-@Setter
-@NoArgsConstructor
+@Setter 
 @Document(collection = "current-account")
 public class currentAccount {
   @Id
@@ -22,20 +22,25 @@ public class currentAccount {
     .retrieve()
     .bodyToMono(String.class)
     .block();
-  private String dateCreated = new Date().toString();
+  private Date dateCreated = new Date();
   private double amount = 0.0;
   private List<movements> movements = new ArrayList<movements>();
-  private String perfil;
+  private String profile;
 
   @NotBlank(message = "Debe seleccionar un cliente.")
   private String idCustomer;
 
-  public currentAccount(String perfil) {
-    this.perfil = perfil;
+  public currentAccount() {
+    this.profile = ""; 
   }
 
-  public currentAccount(String perfil, String idCustomer) {
-    this.perfil = perfil;
+  public currentAccount(String idCustomer) {
+    this.profile = "";
+    this.idCustomer = idCustomer;
+  }
+
+  public currentAccount(String idCustomer, String profile) {
+    this.profile = profile;
     this.idCustomer = idCustomer;
   }
 }

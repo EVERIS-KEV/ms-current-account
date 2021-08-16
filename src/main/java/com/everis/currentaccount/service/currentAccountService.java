@@ -18,8 +18,10 @@ import reactor.core.publisher.*;
 public class currentAccountService {
   @Autowired
   currentAccountRepository repository;
-
-  static ScheduledExecutorService executor = null;
+  
+  private final List<String> operations = Arrays.asList("Retiro", "Deposito", "Trasnferencia", "Comisión"); 
+  private static ScheduledExecutorService executor = null;
+  private static final int LIMIT_MOVEMENT = 5; 
 
   private Boolean verifyCustomer(String id) {
     return webclient.customer
@@ -39,6 +41,107 @@ public class currentAccountService {
       .block();
   }
 
+  private Boolean verifyNumberCC(String number) {
+    return webclient.currentAccount
+      .get()
+      .uri("/verifyByNumberAccount/" + number)
+      .retrieve()
+      .bodyToMono(Boolean.class)
+      .block();
+  }
+
+  private Boolean verifyNumberSC(String number) {
+    return webclient.savingAccount
+      .get()
+      .uri("/verifyByNumberAccount/" + number)
+      .retrieve()
+      .bodyToMono(Boolean.class)
+      .block();
+  }
+
+  private Boolean verifyNumberFC(String number) {
+    return webclient.fixedAccount
+      .get()
+      .uri("/verifyByNumberAccount/" + number)
+      .retrieve()
+      .bodyToMono(Boolean.class)
+      .block();
+  }
+
+  private Boolean verifyCE(String number) {
+	  if ( verifyNumberCC(number) || verifyNumberSC(number) || verifyNumberFC(number) ) return true;
+	    return false;
+  }
+
+  private Boolean verifyCR(String number) {
+	  if ( verifyNumberCC(number) || verifyNumberSC(number) || verifyNumberFC(number) ) return true;
+	    return false;
+  }
+  
+  private String addMovements(movements movement) {
+    double val = getAmountByNumber(movement.getAccountEmisor());
+    currentAccount model = repository.findByAccountNumber(movement.getAccountEmisor());
+    
+    if (movement.getType().equals("Deposito")) {
+      model.setAmount(movement.getAmount() + val);
+      model.getMovements().add(movement);
+    } else {
+    	if (movement.getAmount() > val) return "Cantidad insuficiente.";
+    	else {
+    		
+    		if( movement.getType().equals("Trasnferencia") && movement.getAccountRecep()!=null) {
+    			if(verifyCR(movement.getAccountRecep()) ){
+    				if( verifyNumberCC( movement.getAccountRecep() ) ) { 
+        				webclient.currentAccount
+    	    				.post()
+    	    				.uri("/addTransfer")
+    	    				.body( Mono.just(movement), movements.class )
+    	    				.retrieve()
+    	    				.bodyToMono(Object.class)
+    	    				.subscribe();
+        			}
+        			if( verifyNumberSC( movement.getAccountRecep() ) ) { 
+        				webclient.savingAccount
+    	    				.post()
+    	    				.uri("/addTransfer")
+    	    				.body( Mono.just(movement), movements.class )
+    	    				.retrieve()
+    	    				.bodyToMono(Object.class)
+    	    				.subscribe(); 
+        			}
+        			if( verifyNumberFC( movement.getAccountRecep() ) ) { 	
+        				webclient.fixedAccount
+    	    				.post()
+    	    				.uri("/addTransfer")
+    	    				.body( Mono.just(movement), movements.class )
+    	    				.retrieve()
+    	    				.bodyToMono(Object.class)
+    	    				.subscribe();
+        					
+        			} 
+    			}else return "Cuenta receptora no exciste.";
+    		}
+    		
+			model.setAmount(val - movement.getAmount()); 
+			model.getMovements().add(movement);
+    	}
+    } 
+    
+    repository.save(model);
+    return "Movimiento realizado";
+  }
+
+  private void addCommissionById( String id ) {
+	  double amount =  getAmountByID(id) - 1;
+	  currentAccount model =  repository.findById(id).get();
+
+	  movements mobj = new movements( model.getAccountNumber() , "Comisión", 1.0);
+	  model.getMovements().add(mobj);
+	  
+	  model.setAmount( amount ); 
+	  repository.save(model);
+  }
+
   private double getAmountByNumber(String number) {
     return repository.findByAccountNumber(number).getAmount();
   }
@@ -47,42 +150,15 @@ public class currentAccountService {
     return repository.findById(id).get().getAmount();
   }
 
-  private void setAmountByID( String id ) {
-	  double amount =  getAmountByID(id) - 1;
-	  currentAccount model =  repository.findById(id).get();
-	  model.setAmount( amount ); 
-	  repository.save(model);
-  }
-
-  private String setAmount(movements movement) {
-    double val = getAmountByNumber(movement.getAccountNumber());
-    currentAccount model = repository.findByAccountNumber(movement.getAccountNumber());
-
-    if (movement.getType().equals("Deposito")) {
-      model.setAmount(movement.getAmount() + val);
-      model.getMovements().add(movement);
-    } else {
-      if (movement.getAmount() > val) return "Cantidad insuficiente."; else {
-        model.setAmount(val - movement.getAmount());
-        model.getMovements().add(movement);
-      }
-    }
-
-    repository.save(model);
-    return "Movimiento realizado";
-  }
-
-  private void chronometer(String id) {
+  private void CommissionForMaintenance(String id) {
     TimerTask _timerTask = new TimerTask() {
 
       @Override
       public void run() {
         String datestring = new SimpleDateFormat("dd").format(new Date());
-        String timestring = new SimpleDateFormat("HH:mm:ss").format(new Date()); 
+        String timestring = new SimpleDateFormat("HH:mm:ss").format(new Date());  
         
-        System.out.println( datestring + " - " + timestring );
-        
-        if( datestring.equals("13") && timestring.equals("12:52:20") ) setAmountByID( id ); 
+        if( datestring.equals("13") && timestring.equals("12:52:20") ) addCommissionById( id ); 
         
       }
     };
@@ -90,25 +166,35 @@ public class currentAccountService {
     executor.scheduleAtFixedRate(_timerTask, 1, 1, TimeUnit.SECONDS);
   }
 
+  public Mono<Object> saveTransfer(movements model){
+	  currentAccount obj = repository.findByAccountNumber( model.getAccountRecep() );
+	  double amount = obj.getAmount();
+	  
+	  obj.setAmount( amount + model.getAmount() );
+	  obj.getMovements().add(model);
+	  
+	  repository.save( obj );
+	  return Mono.just(new message(""));
+  }
+  
   public Mono<Object> saveMovements(movements model) {
     String msg = "Movimiento realizado";
 
-    if (repository.existsByAccountNumber(model.getAccountNumber())) {
-      if (model.getType().equals("Deposito") || model.getType().equals("Retiro")) {
-        String idaccount = repository
-          .findByAccountNumber(model.getAccountNumber())
-          .getIdCurrentAccount();
+    if (repository.existsByAccountNumber(model.getAccountEmisor())) {
+    	
+      if (!operations.stream().filter( c -> c.equals( model.getType() ) ).toList().isEmpty()) {
+    	  
+        currentAccount obj = repository.findByAccountNumber( model.getAccountEmisor() );
+    	  
+        String idaccount = obj.getIdCurrentAccount();
+        String profile = obj.getProfile();
 
-        int count = (int) repository
-          .findById(idaccount)
-          .get()
-          .getMovements()
-          .stream()
-          .count();
-
-        if (count == 0) {
-          chronometer(idaccount);
-        } setAmount(model);
+        int count = (int) obj.getMovements().stream().count(); 
+        
+        if( count == 0 || profile.equals("PYME") ) CommissionForMaintenance(idaccount);  
+        if( count > LIMIT_MOVEMENT ) addCommissionById( idaccount );  
+        
+        msg = addMovements(model);
       } else msg = "Selecione una operacion correcta.";
     } else msg = "Numero de cuenta incorrecto.";
 
@@ -138,10 +224,15 @@ public class currentAccountService {
   public Mono<Object> getOne(String id) {
     return Mono.just(repository.findByAccountNumber(id));
   }
+  
+  public Mono<Boolean> _verifyByNumberAccount(String number) {
+	  return Mono.just(repository.existsByAccountNumber(number));
+  }
 
   public Flux<Object> getByCustomer(String id) {
     return Flux.fromIterable(
       repository.findAll().stream().filter(c -> c.getIdCustomer().equals(id)).toList()
     );
   }
+
 }

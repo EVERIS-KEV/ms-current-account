@@ -1,9 +1,8 @@
 package com.everis.currentaccount.controller;
 
 import com.everis.currentaccount.dto.message;
-import com.everis.currentaccount.model.*; 
-import com.everis.currentaccount.service.currentAccountService; 
-
+import com.everis.currentaccount.model.*;
+import com.everis.currentaccount.service.currentAccountService;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -53,6 +52,22 @@ public class currentAccountController {
     return service.saveMovements(model);
   }
 
+  @PostMapping("/addTransfer")
+  public Mono<Object> addTransfer(
+    @RequestBody @Valid movements model,
+    BindingResult bindinResult
+  ) {
+    String msg = "";
+
+    if (bindinResult.hasErrors()) {
+      for (int i = 0; i < bindinResult.getAllErrors().size(); i++) msg =
+        bindinResult.getAllErrors().get(0).getDefaultMessage();
+      return Mono.just(new message(msg));
+    }
+
+    return service.saveTransfer(model);
+  }
+
   @GetMapping("/")
   public Flux<Object> findAll() {
     return service.getAll();
@@ -62,9 +77,14 @@ public class currentAccountController {
   public Mono<Object> findOneByNumberAccount(@PathVariable("number") String number) {
     return service.getOne(number);
   }
-  
+
+  @GetMapping("/verifyByNumberAccount/{number}")
+  public Mono<Boolean> verifyByNumberAccount(@PathVariable("number") String number) {
+    return service._verifyByNumberAccount(number);
+  }
+
   @GetMapping("/byCustomer/{id}")
-  public Flux<Object> findByCustomer(@PathVariable("id") String id){
-	  return service.getByCustomer(id);
+  public Flux<Object> findByCustomer(@PathVariable("id") String id) {
+    return service.getByCustomer(id);
   }
 }
