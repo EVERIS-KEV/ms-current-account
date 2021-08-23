@@ -28,7 +28,7 @@ public class currentAccount {
 	private double amount = 0.0;
 	private Date dateCreated = new Date();
 	private String typeAccount = "Cuenta corriente.";
-	private List<movements> movement = new ArrayList<movements>();
+	private List<movements> movements = new ArrayList<movements>();
 
 	@NotBlank(message = "Debe seleccionar un cliente.")
 	private String idCustomer;

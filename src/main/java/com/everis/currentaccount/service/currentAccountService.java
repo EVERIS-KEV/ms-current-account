@@ -58,14 +58,16 @@ public class currentAccountService {
 	}
 
 	private Boolean verifyCE(String number) {
-		if (verifyNumberCC(number) || verifyNumberSC(number) || verifyNumberFC(number))
+		if (verifyNumberCC(number) || verifyNumberSC(number) || verifyNumberFC(number)) {
 			return true;
+		}
 		return false;
 	}
 
 	private Boolean verifyCR(String number) {
-		if (verifyNumberCC(number) || verifyNumberSC(number) || verifyNumberFC(number))
+		if (verifyNumberCC(number) || verifyNumberSC(number) || verifyNumberFC(number)) {
 			return true;
+		}
 		return false;
 	}
 
@@ -75,37 +77,37 @@ public class currentAccountService {
 
 		if (movement.getType().equals("Deposito")) {
 			model.setAmount(movement.getAmount() + val);
-			model.getMovement().add(movement);
 		} else {
-			if (movement.getAmount() > val)
+			if (movement.getAmount() > val) {
 				return "Cantidad insuficiente.";
-			else {
+			} else {
 
-				if (movement.getType().equals("Trasnferencia") && movement.getAccountRecep() != null) {
+				if (movement.getType().equals("Trasnferencia") && (movement.getAccountRecep() != null)) {
 					if (verifyCR(movement.getAccountRecep())) {
 						if (verifyNumberCC(movement.getAccountRecep())) {
 							webclient.currentAccount.post().uri("/addTransfer")
-									.body(Mono.just(movement), movements.class).retrieve().bodyToMono(Object.class)
-									.subscribe();
+							.body(Mono.just(movement), movements.class).retrieve().bodyToMono(Object.class)
+							.subscribe();
 						}
 						if (verifyNumberSC(movement.getAccountRecep())) {
 							webclient.savingAccount.post().uri("/addTransfer")
-									.body(Mono.just(movement), movements.class).retrieve().bodyToMono(Object.class)
-									.subscribe();
+							.body(Mono.just(movement), movements.class).retrieve().bodyToMono(Object.class)
+							.subscribe();
 						}
 						if (verifyNumberFC(movement.getAccountRecep())) {
 							webclient.fixedAccount.post().uri("/addTransfer").body(Mono.just(movement), movements.class)
-									.retrieve().bodyToMono(Object.class).subscribe();
+							.retrieve().bodyToMono(Object.class).subscribe();
 
 						}
-					} else
+					} else {
 						return "Cuenta receptora no exciste.";
+					}
 				}
 
 				model.setAmount(val - movement.getAmount());
-				model.getMovement().add(movement);
 			}
 		}
+		model.getMovements().add(movement);
 
 		repository.save(model);
 		return "Movimiento realizado";
@@ -116,7 +118,7 @@ public class currentAccountService {
 		currentAccount model = repository.findById(id).get();
 
 		movements mobj = new movements(model.getAccountNumber(), "Comisión", 1.0);
-		model.getMovement().add(mobj);
+		model.getMovements().add(mobj);
 
 		model.setAmount(amount);
 		repository.save(model);
@@ -138,8 +140,9 @@ public class currentAccountService {
 				String datestring = new SimpleDateFormat("dd").format(new Date());
 				String timestring = new SimpleDateFormat("HH:mm:ss").format(new Date());
 
-				if (datestring.equals("13") && timestring.equals("12:52:20"))
+				if (datestring.equals("13") && timestring.equals("12:52:20")) {
 					addCommissionById(id);
+				}
 
 			}
 		};
@@ -152,7 +155,7 @@ public class currentAccountService {
 		double amount = obj.getAmount();
 
 		obj.setAmount(amount + model.getAmount());
-		obj.getMovement().add(model);
+		obj.getMovements().add(model);
 
 		repository.save(obj);
 		return Mono.just(new message(""));
@@ -170,18 +173,22 @@ public class currentAccountService {
 				String idaccount = obj.getIdCurrentAccount();
 				String profile = obj.getProfile();
 
-				int count = (int) obj.getMovement().stream().count();
+				int count = (int) obj.getMovements().stream().count();
 
-				if (count == 0 || profile.equals("PYME"))
+				if ((count == 0) || profile.equals("PYME")) {
 					CommissionForMaintenance(idaccount);
-				if (count > LIMIT_MOVEMENT)
+				}
+				if (count > LIMIT_MOVEMENT) {
 					addCommissionById(idaccount);
+				}
 
 				msg = addMovements(model);
-			} else
+			} else {
 				msg = "Selecione una operacion correcta.";
-		} else
+			}
+		} else {
 			msg = "Numero de cuenta incorrecto.";
+		}
 
 		return Mono.just(new message(msg));
 	}
@@ -192,16 +199,14 @@ public class currentAccountService {
 		if (verifyCustomer(model.getIdCustomer())) {
 			String typeCustomer = customerFind(model.getIdCustomer()).getType();
 
-			if (typeCustomer.equals("empresarial"))
+			if (typeCustomer.equals("empresarial") || !repository.existsByIdCustomer(model.getIdCustomer())) {
 				repository.save(model);
-			else {
-				if (!repository.existsByIdCustomer(model.getIdCustomer()))
-					repository.save(model);
-				else
-					msg = "Usted ya no puede abrir otra cuenta.";
+			} else {
+				msg = "Usted ya no puede abrir otra cuenta.";
 			}
-		} else
+		} else {
 			msg = "Cliente no registrado";
+		}
 
 		return Mono.just(new message(msg));
 	}
