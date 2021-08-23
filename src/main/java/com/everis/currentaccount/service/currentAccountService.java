@@ -175,7 +175,7 @@ public class currentAccountService {
 
 				int count = (int) obj.getMovements().stream().count();
 
-				if ((count == 0) || profile.equals("PYME")) {
+				if ((count == 0) || !profile.equals("PYME")) {
 					CommissionForMaintenance(idaccount);
 				}
 				if (count > LIMIT_MOVEMENT) {
