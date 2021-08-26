@@ -1,9 +1,7 @@
 package com.everis.currentaccount.model;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.time.*;
+import java.util.*;  
 
 import javax.validation.constraints.NotBlank;
 
@@ -27,7 +25,7 @@ public class currentAccount {
 			.bodyToMono(String.class).block();
 
 	private double amount = 0.0;
-	private LocalDateTime dateCreated = LocalDateTime.now();
+	private LocalDateTime dateCreated = LocalDateTime.now( ZoneId.of("America/Lima") );
 	private String typeAccount = "Cuenta corriente.";
 	private List<movements> movements = new ArrayList<movements>();
 

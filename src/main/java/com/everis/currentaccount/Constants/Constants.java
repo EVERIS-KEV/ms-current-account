@@ -3,9 +3,9 @@ package com.everis.currentaccount.Constants;
 public enum Constants {
     ;
     public static class Messages {
-        public static final String ACCOUNT_REGISTERED = "Cliente no registrado";
+        public static final String ACCOUNT_REGISTERED = "Cuenta registrada.";
         public static final String CLIENT_NO_MORE_ACCOUNT = "Usted ya no puede abrir otra cuenta corriente.";
-        public static final String CLIENT_NOT_REGISTERED = "Cliente no registrado";
+        public static final String CLIENT_NOT_REGISTERED = "Cliente no registrado.";
 
         public static final String INCORRECT_OPERATION = "Operacion incorrecta.";
         public static final String SUCCESS_OPERATION = "Operacion realizada.";
