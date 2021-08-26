@@ -9,7 +9,7 @@ import com.everis.currentaccount.model.currentAccount;
 public interface currentAccountRepository extends MongoRepository<currentAccount, String> {
 	boolean existsByAccountNumber(String number);
 
-	boolean existsByIdCustomer(String id);
+	boolean existsByIdCustomer(String id); 
 
 	currentAccount findByAccountNumber(String number);
 }

@@ -4,14 +4,7 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*; 
 
 import com.everis.currentaccount.dto.message;
 import com.everis.currentaccount.model.currentAccount;
@@ -19,7 +12,7 @@ import com.everis.currentaccount.model.movements;
 import com.everis.currentaccount.service.currentAccountService;
 
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Mono; 
 
 @RestController
 @CrossOrigin(origins = "*", methods = { RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
@@ -29,26 +22,29 @@ public class currentAccountController {
 	@Autowired
 	currentAccountService service;
 
-	@PostMapping("/save")
-	public Mono<Object> created(@RequestBody @Valid currentAccount model, BindingResult bindinResult) {
+	private Mono<Object> BindingResultErrors(BindingResult bindinResult){
 		String msg = "";
 
+		for (int i = 0; i < bindinResult.getAllErrors().size(); i++) {
+			msg = bindinResult.getAllErrors().get(0).getDefaultMessage();
+		}
+		return Mono.just(new message(msg));
+	}
+
+	@PostMapping("/save")
+	public Mono<Object> created(@RequestBody @Valid currentAccount model, BindingResult bindinResult) {
+
 		if (bindinResult.hasErrors()) {
-			for (int i = 0; i < bindinResult.getAllErrors().size(); i++)
-				msg = bindinResult.getAllErrors().get(0).getDefaultMessage();
-			return Mono.just(new message(msg));
+			return BindingResultErrors(bindinResult);
 		}
 		return service.save(model);
 	}
 
 	@PostMapping("/movememts")
 	public Mono<Object> registedMovememts(@RequestBody @Valid movements model, BindingResult bindinResult) {
-		String msg = "";
 
 		if (bindinResult.hasErrors()) {
-			for (int i = 0; i < bindinResult.getAllErrors().size(); i++)
-				msg = bindinResult.getAllErrors().get(0).getDefaultMessage();
-			return Mono.just(new message(msg));
+			return BindingResultErrors(bindinResult);
 		}
 
 		return service.saveMovements(model);
@@ -56,12 +52,9 @@ public class currentAccountController {
 
 	@PostMapping("/addTransfer")
 	public Mono<Object> addTransfer(@RequestBody @Valid movements model, BindingResult bindinResult) {
-		String msg = "";
 
 		if (bindinResult.hasErrors()) {
-			for (int i = 0; i < bindinResult.getAllErrors().size(); i++)
-				msg = bindinResult.getAllErrors().get(0).getDefaultMessage();
-			return Mono.just(new message(msg));
+			return BindingResultErrors(bindinResult);
 		}
 
 		return service.saveTransfer(model);

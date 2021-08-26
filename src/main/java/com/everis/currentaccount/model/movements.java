@@ -26,7 +26,7 @@ public class movements {
 		this.type = type;
 		this.amount = amount;
 		this.accountEmisor = accountEmisor;
-		this.accountRecep = "";
+		this.accountRecep = null;
 	}
 
 	public movements(String accountEmisor, String accountRecep, String type, double amount) {

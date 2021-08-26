@@ -1,10 +1,13 @@
-com\everis\currentaccount\CurrentAccountServiceApplication.class
+com\everis\currentaccount\Constants\Constants$Messages.class
 com\everis\currentaccount\dto\message.class
 com\everis\currentaccount\model\currentAccount.class
-com\everis\currentaccount\service\currentAccountService$1.class
-com\everis\currentaccount\controller\currentAccountController.class
 com\everis\currentaccount\service\currentAccountService.class
-com\everis\currentaccount\consumer\webclient.class
 com\everis\currentaccount\repository\currentAccountRepository.class
 com\everis\currentaccount\map\customer.class
+com\everis\currentaccount\CurrentAccountServiceApplication.class
+com\everis\currentaccount\service\currentAccountService$1.class
+com\everis\currentaccount\controller\currentAccountController.class
+com\everis\currentaccount\Constants\Constants$Path.class
+com\everis\currentaccount\consumer\webclient.class
+com\everis\currentaccount\Constants\Constants.class
 com\everis\currentaccount\model\movements.class

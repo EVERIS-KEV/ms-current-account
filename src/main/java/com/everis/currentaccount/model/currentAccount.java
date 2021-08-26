@@ -1,5 +1,6 @@
 package com.everis.currentaccount.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +27,7 @@ public class currentAccount {
 			.bodyToMono(String.class).block();
 
 	private double amount = 0.0;
-	private Date dateCreated = new Date();
+	private LocalDateTime dateCreated = LocalDateTime.now();
 	private String typeAccount = "Cuenta corriente.";
 	private List<movements> movements = new ArrayList<movements>();
 
